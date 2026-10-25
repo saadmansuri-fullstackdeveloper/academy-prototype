@@ -1,1 +1,806 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Ashgrove Academy</title>
+<style>
+  /* Layout: fixed top bar + routed single-column views; course enrolment is an in-page 3-step wizard.
+     Palette: deep teal-green institution colour, brass accent, cool paper neutral. Type: Fraunces display + Public Sans body. */
+  :root{
+    --bg:#f3f5f1; --surface:#ffffff; --surface-2:#f7f8f4;
+    --fg:#192420; --muted:#5a6a61; --line:#dfe4dc;
+    --primary:#1f4d44; --primary-ink:#ffffff; --primary-soft:#e4ede9;
+    --accent:#a9741f; --accent-soft:#f3e7cf;
+    --good:#1f7a54; --good-soft:#dcefe3;
+    --focus:#bb8a2b;
+    --shadow:0 1px 2px rgba(25,36,32,.04),0 8px 24px rgba(25,36,32,.06);
+    --radius:14px; --radius-sm:9px;
+    --display:"Fraunces",Georgia,"Times New Roman",serif;
+    --body:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --maxw:1080px;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#10140f; --surface:#171d18; --surface-2:#1c231d;
+    --fg:#eaefe8; --muted:#9fb0a4; --line:#2b342d;
+    --primary:#4c9a8a; --primary-ink:#06100c; --primary-soft:#1d2a26;
+    --accent:#d6a44e; --accent-soft:#2a2316;
+    --good:#5fc08c; --good-soft:#1a2c22;
+    --focus:#d6a44e;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#10140f; --surface:#171d18; --surface-2:#1c231d;
+    --fg:#eaefe8; --muted:#9fb0a4; --line:#2b342d;
+    --primary:#4c9a8a; --primary-ink:#06100c; --primary-soft:#1d2a26;
+    --accent:#d6a44e; --accent-soft:#2a2316;
+    --good:#5fc08c; --good-soft:#1a2c22;
+    --focus:#d6a44e;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.55;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--primary)}
+  h1,h2,h3,h4{font-family:var(--display);font-weight:600;line-height:1.12;text-wrap:balance;margin:0}
+  p{margin:0}
+  a{color:inherit}
+  button{font-family:inherit}
+  :focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
+  .skip{position:absolute;left:-9999px;top:0;background:var(--primary);color:var(--primary-ink);padding:10px 16px;border-radius:0 0 8px 0;z-index:100}
+  .skip:focus{left:0}
+
+  /* demo ribbon */
+  .ribbon{background:var(--accent-soft);color:var(--fg);border-bottom:1px solid var(--line);font-size:.78rem}
+  .ribbon .wrap{display:flex;gap:8px;align-items:center;justify-content:center;padding-block:7px;text-align:center}
+  .ribbon b{font-weight:700}
+
+  /* top bar */
+  header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--primary);color:var(--primary-ink);border-bottom:1px solid rgba(0,0,0,.12)}
+  header.site .wrap{display:flex;align-items:center;gap:16px;padding-block:12px}
+  .brand{display:flex;align-items:center;gap:11px;background:none;border:0;color:inherit;cursor:pointer;padding:0;text-align:left}
+  .crest{width:38px;height:38px;flex:0 0 auto;border-radius:8px;background:var(--accent);color:#1a1205;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:1.15rem}
+  .brand .name{font-family:var(--display);font-weight:700;font-size:1.18rem;letter-spacing:.01em;line-height:1.05}
+  .brand .tag{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;opacity:.82}
+  nav.main{margin-left:auto;display:flex;align-items:center;gap:2px}
+  nav.main a{padding:9px 13px;border-radius:8px;text-decoration:none;font-weight:600;font-size:.92rem;opacity:.9;cursor:pointer;white-space:nowrap}
+  nav.main a:hover{background:rgba(255,255,255,.12);opacity:1}
+  nav.main a.active{background:rgba(255,255,255,.17);opacity:1}
+  .menu-btn{display:none;margin-left:auto;background:rgba(255,255,255,.12);border:0;color:inherit;width:42px;height:42px;border-radius:9px;cursor:pointer;font-size:1.25rem}
+  .theme-btn{background:rgba(255,255,255,.12);border:0;color:inherit;width:38px;height:38px;border-radius:9px;cursor:pointer;font-size:1rem;flex:0 0 auto}
+  nav.main .theme-btn{margin-left:6px}
+
+  main{padding-bottom:40px}
+  .view{display:block}
+  .view[hidden]{display:none!important}
+
+  /* hero */
+  .hero{background:var(--primary);color:var(--primary-ink);padding-block:52px 60px;position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;right:-80px;top:-80px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(169,116,31,.35),transparent 62%);pointer-events:none}
+  .hero .eyebrow{font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:14px}
+  .hero h1{font-size:clamp(2.1rem,5.4vw,3.5rem);max-width:15ch;margin-bottom:16px}
+  .hero p.lead{font-size:1.12rem;max-width:52ch;opacity:.92;margin-bottom:26px}
+  .hero-cta{display:flex;flex-wrap:wrap;gap:12px}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:12px 22px;font-weight:700;font-size:.95rem;cursor:pointer;text-decoration:none;transition:transform .08s ease,filter .15s ease}
+  .btn:active{transform:translateY(1px)}
+  .btn-accent{background:var(--accent);color:#1a1205}
+  .btn-accent:hover{filter:brightness(1.06)}
+  .btn-ghost{background:transparent;color:var(--primary-ink);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.5)}
+  .btn-ghost:hover{background:rgba(255,255,255,.1)}
+  .btn-primary{background:var(--primary);color:var(--primary-ink)}
+  .btn-primary:hover{filter:brightness(1.07)}
+  .btn-line{background:var(--surface);color:var(--fg);box-shadow:inset 0 0 0 1.5px var(--line)}
+  .btn-line:hover{background:var(--surface-2)}
+  .btn[disabled]{opacity:.5;cursor:not-allowed}
+
+  /* stats strip */
+  .stats{background:var(--surface);border-bottom:1px solid var(--line)}
+  .stats .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;padding-block:22px}
+  .stat .n{font-family:var(--display);font-weight:700;font-size:1.9rem;color:var(--primary);line-height:1}
+  .stat .l{font-size:.82rem;color:var(--muted);margin-top:4px}
+
+  section.block{padding-block:44px}
+  .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px}
+  .sec-head .eyebrow{font-size:.72rem;letter-spacing:.17em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:7px}
+  .sec-head h2{font-size:clamp(1.5rem,3.2vw,2rem)}
+  .sec-head a.more{color:var(--primary);font-weight:700;text-decoration:none;font-size:.9rem;white-space:nowrap;cursor:pointer}
+  .sec-head a.more:hover{text-decoration:underline}
+
+  .grid{display:grid;gap:18px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);min-width:0}
+  .card.course{display:flex;flex-direction:column;gap:12px;cursor:pointer;transition:transform .1s ease,border-color .15s ease}
+  .card.course:hover{transform:translateY(-3px);border-color:var(--primary)}
+  .tags{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--primary-soft);color:var(--primary)}
+  .chip.level{background:var(--accent-soft);color:var(--accent)}
+  .card.course h3{font-size:1.18rem}
+  .card.course .desc{color:var(--muted);font-size:.9rem;flex:1}
+  .course-foot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:12px;margin-top:2px}
+  .fee{font-family:var(--display);font-weight:700;font-size:1.15rem;color:var(--fg)}
+  .fee span{font-size:.72rem;color:var(--muted);font-weight:400;font-family:var(--body)}
+  .go{color:var(--primary);font-weight:700;font-size:.88rem}
+
+  /* page intro header for sub-views */
+  .page-top{background:var(--surface);border-bottom:1px solid var(--line);padding-block:30px}
+  .page-top h1{font-size:clamp(1.7rem,4vw,2.5rem);margin-bottom:8px}
+  .page-top p{color:var(--muted);max-width:60ch}
+  .crumbs{display:flex;gap:8px;align-items:center;font-size:.82rem;color:var(--muted);margin-bottom:14px}
+  .crumbs button{background:none;border:0;color:var(--primary);font-weight:600;cursor:pointer;padding:0;font-size:.82rem}
+  .crumbs button:hover{text-decoration:underline}
+
+  /* filters */
+  .toolbar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:22px}
+  .search{position:relative;flex:1;min-width:220px}
+  .search input{width:100%;padding:12px 14px 12px 42px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);font-size:.95rem}
+  .search input:focus{outline:none;border-color:var(--primary)}
+  .search svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  .filters{display:flex;flex-wrap:wrap;gap:7px}
+  .filter{background:var(--surface);border:1.5px solid var(--line);color:var(--muted);padding:7px 14px;border-radius:999px;font-weight:600;font-size:.84rem;cursor:pointer}
+  .filter:hover{border-color:var(--primary);color:var(--fg)}
+  .filter[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
+  .result-count{color:var(--muted);font-size:.86rem;margin-bottom:16px}
+  .empty{text-align:center;color:var(--muted);padding:50px 20px}
+
+  /* course detail */
+  .detail-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:28px;align-items:start}
+  .detail-main h1{font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:14px}
+  .detail-main .desc-long{color:var(--fg);margin:16px 0;font-size:1.02rem}
+  .detail-main ul.pts{list-style:none;padding:0;margin:18px 0;display:flex;flex-direction:column;gap:9px}
+  .detail-main ul.pts li{display:flex;gap:11px;align-items:flex-start;color:var(--muted)}
+  .detail-main ul.pts li::before{content:"✓";color:var(--good);font-weight:800;flex:0 0 auto}
+  .enrol-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);position:sticky;top:96px}
+  .enrol-card .price{font-family:var(--display);font-weight:700;font-size:2.1rem;color:var(--primary)}
+  .enrol-card .price span{font-size:.8rem;color:var(--muted);font-weight:400;font-family:var(--body);display:block;margin-top:2px}
+  .meta-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+  .meta-row:last-of-type{border-bottom:0}
+  .meta-row .k{color:var(--muted)}
+  .meta-row .v{font-weight:600;text-align:right}
+
+  /* wizard */
+  .steps{display:flex;gap:6px;margin-bottom:24px}
+  .steps .s{flex:1;text-align:center;font-size:.76rem;font-weight:700;color:var(--muted);padding-bottom:10px;border-bottom:3px solid var(--line)}
+  .steps .s.active{color:var(--primary);border-color:var(--primary)}
+  .steps .s.done{color:var(--good);border-color:var(--good)}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field.full{grid-column:1/-1}
+  .field label{font-size:.82rem;font-weight:600;color:var(--fg)}
+  .field input,.field select,.field textarea{padding:11px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--line);background:var(--surface);color:var(--fg);font-size:.95rem;font-family:inherit}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--primary)}
+  .field .hint{font-size:.74rem;color:var(--muted)}
+  .pay-note{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);border-radius:var(--radius-sm);padding:12px 14px;font-size:.82rem;margin-bottom:18px}
+  .secure-row{display:flex;align-items:center;gap:8px;color:var(--good);font-weight:600;font-size:.84rem;margin-top:14px}
+
+  /* record card (student+course+payment link) */
+  .record{background:var(--surface-2);border:1px dashed var(--primary);border-radius:var(--radius);padding:20px;margin-top:20px}
+  .record h4{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--primary);margin-bottom:14px}
+  .record-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .rec-col h5{font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;font-family:var(--body);font-weight:700}
+  .rec-col .line{font-size:.86rem;padding:3px 0;font-variant-numeric:tabular-nums}
+  .rec-col .line b{font-weight:700}
+  .linkbar{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--primary);font-weight:700;font-size:.8rem;margin:14px 0 0;flex-wrap:wrap}
+
+  .confirm-hero{text-align:center;padding:14px 0 6px}
+  .tick{width:62px;height:62px;border-radius:50%;background:var(--good-soft);color:var(--good);display:grid;place-items:center;margin:0 auto 16px;font-size:1.8rem}
+
+  /* news / events */
+  .news-item{display:grid;grid-template-columns:92px 1fr;gap:18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);min-width:0}
+  .datebox{background:var(--primary);color:var(--primary-ink);border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 6px;height:fit-content}
+  .datebox .d{font-family:var(--display);font-weight:700;font-size:1.6rem;line-height:1}
+  .datebox .m{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em}
+  .news-item h3{font-size:1.12rem;margin-bottom:5px}
+  .news-item p{color:var(--muted);font-size:.9rem}
+  .pill{display:inline-block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 9px;border-radius:999px;margin-bottom:7px}
+  .pill.news{background:var(--primary-soft);color:var(--primary)}
+  .pill.event{background:var(--accent-soft);color:var(--accent)}
+
+  /* vacancies */
+  .vac{display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
+  .vac .vmain{min-width:220px;flex:1}
+  .vac h3{font-size:1.1rem;margin-bottom:5px}
+  .vac .vmeta{display:flex;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:.84rem}
+  .vac .vmeta span{display:inline-flex;align-items:center;gap:5px}
+  .closing{font-size:.78rem;color:var(--muted)}
+  .closing b{color:var(--fg)}
+
+  /* CMS */
+  .cms-shell{display:grid;grid-template-columns:200px 1fr;gap:0;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);background:var(--surface)}
+  .cms-side{background:var(--primary);color:var(--primary-ink);padding:18px 14px}
+  .cms-side .u{display:flex;align-items:center;gap:9px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.18);margin-bottom:14px}
+  .cms-side .u .av{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#1a1205;display:grid;place-items:center;font-weight:700;flex:0 0 auto}
+  .cms-side .u small{display:block;opacity:.8;font-size:.72rem}
+  .cms-nav{display:flex;flex-direction:column;gap:3px}
+  .cms-nav .i{padding:9px 11px;border-radius:8px;font-size:.88rem;font-weight:600;opacity:.85;display:flex;gap:9px;align-items:center}
+  .cms-nav .i.on{background:rgba(255,255,255,.16);opacity:1}
+  .cms-body{padding:22px}
+  .cms-body .cms-head{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;margin-bottom:18px}
+  .cms-body h3{font-size:1.25rem}
+  .status-dot{display:inline-flex;align-items:center;gap:7px;font-size:.8rem;font-weight:600;color:var(--muted)}
+  .status-dot i{width:9px;height:9px;border-radius:50%;background:var(--accent);display:inline-block}
+  .status-dot.live i{background:var(--good)}
+  .status-dot.live{color:var(--good)}
+
+  /* toast */
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--fg);color:var(--bg);padding:13px 20px;border-radius:999px;font-weight:600;font-size:.9rem;box-shadow:0 10px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:200;display:flex;gap:9px;align-items:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* footer */
+  footer.site{background:var(--primary);color:var(--primary-ink);padding-block:36px;margin-top:10px}
+  footer.site .cols{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:28px}
+  footer.site h4{font-family:var(--display);font-size:1.05rem;margin-bottom:12px}
+  footer.site .flinks{display:flex;flex-direction:column;gap:7px}
+  footer.site .flinks button{background:none;border:0;color:inherit;opacity:.85;text-align:left;cursor:pointer;padding:0;font-size:.9rem}
+  footer.site .flinks button:hover{opacity:1;text-decoration:underline}
+  footer.site .fnote{opacity:.82;font-size:.86rem;max-width:34ch}
+  footer.site .fbar{border-top:1px solid rgba(255,255,255,.18);margin-top:26px;padding-top:16px;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;font-size:.8rem;opacity:.82}
+  .a11y-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);padding:5px 11px;border-radius:999px;font-weight:600}
+
+  @media (max-width:860px){
+    .detail-grid{grid-template-columns:1fr}
+    .enrol-card{position:static}
+    footer.site .cols{grid-template-columns:1fr 1fr}
+    .cms-shell{grid-template-columns:1fr}
+    .cms-side{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+    .cms-side .u{border:0;padding:0;margin:0}
+    .cms-nav{flex-direction:row;flex-wrap:wrap}
+  }
+  @media (max-width:720px){
+    nav.main{position:absolute;top:100%;right:0;left:0;flex-direction:column;align-items:stretch;background:var(--primary);padding:10px max(18px,env(safe-area-inset-left,0px));gap:3px;border-top:1px solid rgba(255,255,255,.14);box-shadow:var(--shadow)}
+    nav.main[hidden]{display:none}
+    nav.main a{padding:12px 13px}
+    .menu-btn{display:block}
+    nav.main .theme-btn{display:none}
+    .g3,.g2{grid-template-columns:1fr}
+    .stats .wrap{grid-template-columns:1fr 1fr}
+    .form-grid{grid-template-columns:1fr}
+    .record-grid{grid-template-columns:1fr}
+    .news-item{grid-template-columns:70px 1fr}
+    .hero{padding-block:40px 46px}
+  }
+</style>
+
+<a href="#main" class="skip">Skip to main content</a>
+
+<div class="ribbon"><div class="wrap">
+  <b>Prototype demo</b> · work sample for an ASP.NET school website build · fictional school, no real data or payments
+</div></div>
+
+<header class="site">
+  <div class="wrap">
+    <button class="brand" onclick="go('home')" aria-label="Ashgrove Academy home">
+      <span class="crest" aria-hidden="true">A</span>
+      <span>
+        <span class="name">Ashgrove Academy</span>
+        <span class="tag">Est. 1987 · Learn · Grow · Belong</span>
+      </span>
+    </button>
+    <button class="menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false">☰</button>
+    <nav class="main" id="nav" aria-label="Primary">
+      <a data-route="home" onclick="go('home')">Home</a>
+      <a data-route="courses" onclick="go('courses')">Courses</a>
+      <a data-route="news" onclick="go('news')">News &amp; Events</a>
+      <a data-route="jobs" onclick="go('jobs')">Vacancies</a>
+      <a data-route="staff" onclick="go('staff')">Staff CMS</a>
+      <button class="theme-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle light/dark">◐</button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- HOME -->
+  <section class="view" id="view-home">
+    <div class="hero">
+      <div class="wrap">
+        <p class="eyebrow">Independent day school · Ages 7–18</p>
+        <h1>A small school with big horizons.</h1>
+        <p class="lead">Browse our courses, enrol and pay online in minutes, and keep up with everything happening across the Ashgrove community.</p>
+        <div class="hero-cta">
+          <a class="btn btn-accent" onclick="go('courses')">Explore courses</a>
+          <a class="btn btn-ghost" onclick="go('news')">What's on</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats"><div class="wrap">
+      <div class="stat"><div class="n">37</div><div class="l">years of teaching</div></div>
+      <div class="stat"><div class="n">640</div><div class="l">pupils enrolled</div></div>
+      <div class="stat"><div class="n">42</div><div class="l">courses &amp; programmes</div></div>
+      <div class="stat"><div class="n">98%</div><div class="l">parent satisfaction</div></div>
+    </div></div>
+
+    <section class="block"><div class="wrap">
+      <div class="sec-head">
+        <div>
+          <p class="eyebrow">Enrol online</p>
+          <h2>Popular courses this term</h2>
+        </div>
+        <a class="more" onclick="go('courses')">View all courses →</a>
+      </div>
+      <div class="grid g3" id="homeCourses"></div>
+    </div></section>
+
+    <section class="block" style="background:var(--surface);border-block:1px solid var(--line)"><div class="wrap">
+      <div class="sec-head">
+        <div>
+          <p class="eyebrow">Stay in the loop</p>
+          <h2>Latest news &amp; events</h2>
+        </div>
+        <a class="more" onclick="go('news')">See everything →</a>
+      </div>
+      <div class="grid g2" id="homeNews"></div>
+    </div></section>
+  </section>
+
+  <!-- COURSES -->
+  <section class="view" id="view-courses" hidden>
+    <div class="page-top"><div class="wrap">
+      <h1>Courses &amp; programmes</h1>
+      <p>Academic support, enrichment and community classes. Search or filter to find the right fit, then enrol and pay securely online.</p>
+    </div></div>
+    <section class="block"><div class="wrap">
+      <div class="toolbar">
+        <div class="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="courseSearch" type="search" placeholder="Search courses — e.g. maths, coding, Spanish" aria-label="Search courses">
+        </div>
+      </div>
+      <div class="filters" id="subjectFilters" role="group" aria-label="Filter by subject"></div>
+      <div style="height:9px"></div>
+      <div class="filters" id="levelFilters" role="group" aria-label="Filter by level"></div>
+      <p class="result-count" id="resultCount" style="margin-top:18px"></p>
+      <div class="grid g3" id="courseGrid"></div>
+      <div class="empty" id="courseEmpty" hidden>No courses match that search. <button class="go" style="background:none;border:0;cursor:pointer" onclick="resetCourseFilters()">Clear filters</button></div>
+    </div></section>
+  </section>
+
+  <!-- COURSE DETAIL -->
+  <section class="view" id="view-detail" hidden>
+    <div class="page-top"><div class="wrap">
+      <div class="crumbs"><button onclick="go('courses')">Courses</button><span>›</span><span id="crumbCourse"></span></div>
+    </div></div>
+    <section class="block"><div class="wrap" id="detailBody"></div></section>
+  </section>
+
+  <!-- ENROL WIZARD -->
+  <section class="view" id="view-enrol" hidden>
+    <div class="page-top"><div class="wrap">
+      <div class="crumbs"><button onclick="go('courses')">Courses</button><span>›</span><button id="crumbBackCourse"></button><span>›</span><span>Enrolment</span></div>
+      <h1 id="enrolTitle">Enrol &amp; pay</h1>
+    </div></div>
+    <section class="block"><div class="wrap" style="max-width:720px">
+      <div class="steps">
+        <div class="s" id="step-1">1 · Student details</div>
+        <div class="s" id="step-2">2 · Payment</div>
+        <div class="s" id="step-3">3 · Confirmation</div>
+      </div>
+      <div id="enrolStepBody"></div>
+    </div></section>
+  </section>
+
+  <!-- NEWS & EVENTS -->
+  <section class="view" id="view-news" hidden>
+    <div class="page-top"><div class="wrap">
+      <h1>News &amp; events</h1>
+      <p>Everything happening across the Ashgrove community — managed entirely by staff through the content system.</p>
+    </div></div>
+    <section class="block"><div class="wrap">
+      <div class="filters" id="newsFilters" role="group" aria-label="Filter news and events" style="margin-bottom:22px"></div>
+      <div class="grid" id="newsList" style="gap:16px"></div>
+    </div></section>
+  </section>
+
+  <!-- VACANCIES -->
+  <section class="view" id="view-jobs" hidden>
+    <div class="page-top"><div class="wrap">
+      <h1>Work with us</h1>
+      <p>Current vacancies at Ashgrove Academy. Applications are reviewed by our HR team; closing dates are shown for each role.</p>
+    </div></div>
+    <section class="block"><div class="wrap">
+      <div class="grid" id="jobList" style="gap:14px"></div>
+    </div></section>
+  </section>
+
+  <!-- STAFF CMS -->
+  <section class="view" id="view-staff" hidden>
+    <div class="page-top"><div class="wrap">
+      <h1>Content system — staff view</h1>
+      <p>A preview of how staff edit and publish content. No code, no developer needed: edit, preview, and publish straight to the live site.</p>
+    </div></div>
+    <section class="block"><div class="wrap">
+      <div class="cms-shell">
+        <aside class="cms-side">
+          <div class="u"><span class="av" aria-hidden="true">RT</span><span>R. Thornbury<small>Office Manager</small></span></div>
+          <nav class="cms-nav" aria-label="CMS sections">
+            <span class="i">▣ Dashboard</span>
+            <span class="i on">📰 News &amp; events</span>
+            <span class="i">📚 Courses</span>
+            <span class="i">💼 Vacancies</span>
+            <span class="i">👥 Enrolments</span>
+          </nav>
+        </aside>
+        <div class="cms-body">
+          <div class="cms-head">
+            <h3>Edit article</h3>
+            <span class="status-dot" id="cmsStatus"><i></i> Draft — unsaved</span>
+          </div>
+          <div class="field full" style="margin-bottom:14px">
+            <label for="cmsTitle">Headline</label>
+            <input id="cmsTitle" value="Autumn Open Morning — Saturday 15 November">
+          </div>
+          <div class="field full" style="margin-bottom:14px">
+            <label for="cmsCat">Category</label>
+            <select id="cmsCat"><option>Event</option><option>News</option><option>Notice</option></select>
+          </div>
+          <div class="field full" style="margin-bottom:16px">
+            <label for="cmsBody">Article body</label>
+            <textarea id="cmsBody" rows="5">Prospective families are warmly invited to our Autumn Open Morning. Meet staff and pupils, tour the science and art studios, and hear about our enrichment programme. Register at reception — no booking required.</textarea>
+            <span class="hint">Changes here would publish to the live News &amp; Events page.</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+            <button class="btn btn-primary" id="cmsPublish">Publish to live site</button>
+            <button class="btn btn-line" onclick="go('news')">Preview live page</button>
+          </div>
+        </div>
+      </div>
+      <p style="color:var(--muted);font-size:.86rem;margin-top:16px;max-width:60ch">This panel is illustrative. In the delivered build, every section of the public site — courses, news, events, vacancies and enrolment records — is editable here by staff, with role-based permissions, revision history and scheduled publishing.</p>
+    </div></section>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h4>Ashgrove Academy</h4>
+        <p class="fnote">An independent day school for ages 7–18. This page is a prototype prepared as a work sample and is not a real school.</p>
+        <div style="margin-top:14px" class="a11y-badge" title="Built to accessibility standards">♿ WCAG 2.2 AA tested</div>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <div class="flinks">
+          <button onclick="go('courses')">Courses</button>
+          <button onclick="go('news')">News &amp; events</button>
+          <button onclick="go('jobs')">Vacancies</button>
+          <button onclick="go('staff')">Staff CMS</button>
+        </div>
+      </div>
+      <div>
+        <h4>The build</h4>
+        <div class="flinks">
+          <button onclick="toast('Demo: content migration of ~200 pages')">Content migration</button>
+          <button onclick="toast('Demo: secure payments &amp; student records')">Secure payments</button>
+          <button onclick="toast('Demo: automated backups &amp; security')">Backups &amp; security</button>
+          <button onclick="toast('Demo: accessibility testing &amp; reporting')">Accessibility report</button>
+        </div>
+      </div>
+    </div>
+    <div class="fbar">
+      <span>Prototype · ASP.NET Core + SQL Server · CMS-driven</span>
+      <span>Clickable work sample — no real payments are processed</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------- data ---------- */
+const COURSES = [
+  {id:'c1',title:'GCSE Mathematics Booster',subject:'Mathematics',level:'Key Stage 4',fee:240,per:'term',dur:'12 weeks · 1.5h/wk',
+   desc:'Targeted support across algebra, geometry and data for grades 4–9.',
+   long:'A focused programme for Year 10 and 11 pupils aiming to lift their GCSE grade. Small groups, weekly practice papers and individual feedback on exam technique.',
+   pts:['Grades 4–9 covered','Weekly marked practice papers','Maximum 8 pupils per group','Progress report each half-term']},
+  {id:'c2',title:'A-Level Physics Tuition',subject:'Science',level:'Sixth Form',fee:320,per:'term',dur:'10 weeks · 2h/wk',
+   desc:'Mechanics, fields and particle physics with past-paper mastery.',
+   long:'Structured support through the A-Level Physics specification, with an emphasis on the mathematical skills and extended-response questions that decide the top grades.',
+   pts:['Full specification coverage','Exam-board aligned','Practical skills clinic included','Taught by subject specialists']},
+  {id:'c3',title:'Introduction to Coding (Python)',subject:'Computing',level:'Key Stage 3',fee:180,per:'course',dur:'8 weeks · 1h/wk',
+   desc:'A friendly first step into programming through games and puzzles.',
+   long:'Pupils build real projects — a quiz game, a chatbot and a simple drawing app — while learning the core ideas of programming. No experience needed.',
+   pts:['No prior experience required','Build 3 real projects','Laptops provided','Certificate on completion']},
+  {id:'c4',title:'Spanish for Beginners',subject:'Languages',level:'Adult & Community',fee:150,per:'course',dur:'10 weeks · 1.5h/wk',
+   desc:'Evening classes in practical, conversational Spanish.',
+   long:'An evening course for parents and the wider community. Leave each session able to use what you have learned, with a focus on speaking and listening for travel and everyday life.',
+   pts:['Evening timetable','Conversation-led','Course booklet included','Open to all abilities']},
+  {id:'c5',title:'Creative Writing Workshop',subject:'English',level:'Adult & Community',fee:120,per:'course',dur:'6 weeks · 2h/wk',
+   desc:'Find your voice across fiction, memoir and poetry.',
+   long:'A supportive workshop led by a published author. Weekly prompts, peer feedback and a short anthology of the group’s work at the end of the course.',
+   pts:['Published-author tutor','Weekly writing prompts','Group anthology produced','All genres welcome']},
+  {id:'c6',title:'Art & Design Portfolio',subject:'Arts',level:'Sixth Form',fee:210,per:'term',dur:'12 weeks · 2h/wk',
+   desc:'Build a standout portfolio for art-school and university applications.',
+   long:'Guidance through developing a coherent, personal portfolio, with studio time, critiques and support with artist statements and interview preparation.',
+   pts:['Studio access included','1:1 portfolio critiques','University application support','Materials provided']},
+  {id:'c7',title:'Music Theory, Grades 1–3',subject:'Music',level:'Key Stage 3',fee:165,per:'course',dur:'10 weeks · 1h/wk',
+   desc:'Theory foundations to support instrumental and vocal study.',
+   long:'From reading notation to keys, intervals and rhythm, this course prepares pupils for ABRSM theory grades 1 to 3 and strengthens their overall musicianship.',
+   pts:['ABRSM grades 1–3','Supports instrument lessons','Mock theory papers','Flexible entry point']},
+  {id:'c8',title:'Exam Skills & Revision',subject:'Cross-curricular',level:'Key Stage 4',fee:95,per:'course',dur:'4 weeks · 2h/wk',
+   desc:'Practical revision strategies and stress management for exam season.',
+   long:'A short, high-impact course that teaches how to revise effectively: planning, active recall, past-paper technique and staying calm under pressure.',
+   pts:['Personal revision plan','Active-recall techniques','Wellbeing &amp; stress tools','Runs before each exam series']},
+];
+
+const NEWS = [
+  {type:'event',d:15,m:'Nov',cat:'Open morning',title:'Autumn Open Morning — Saturday 15 November',body:'Meet staff and pupils, tour the studios and hear about our enrichment programme. No booking required.'},
+  {type:'news',d:9,m:'Oct',cat:'Achievement',title:'Ashgrove pupils shine at the regional science fair',body:'Three of our Year 10 teams took top-three places with projects on renewable energy and water filtration.'},
+  {type:'event',d:3,m:'Dec',cat:'Concert',title:'Winter Concert — an evening of music and carols',body:'Our choirs and ensembles present the annual Winter Concert in the main hall. Doors open 6:30pm.'},
+  {type:'news',d:28,m:'Sep',cat:'Community',title:'New wellbeing garden opens on the lower field',body:'Pupils helped design and plant a quiet garden space, created with support from local volunteers.'},
+  {type:'event',d:21,m:'Nov',cat:'Parents',title:'Year 9 Parents’ Evening',body:'Appointments with subject teachers are now open to book through the parent portal.'},
+];
+
+const JOBS = [
+  {title:'Head of Science',type:'Full time',dept:'Science faculty',salary:'Leadership scale',close:'14 Nov 2026'},
+  {title:'Teaching Assistant (Primary)',type:'Part time',dept:'Lower school',salary:'Grade 4',close:'7 Nov 2026'},
+  {title:'Site &amp; Facilities Manager',type:'Full time',dept:'Operations',salary:'Grade 7',close:'21 Nov 2026'},
+];
+
+/* ---------- state ---------- */
+let filterSubject='All', filterLevel='All', searchTerm='';
+let currentCourse=null, enrolStep=1, enrolData={};
+const ROUTES=['home','courses','detail','enrol','news','jobs','staff'];
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(msg){const t=$('#toast');t.innerHTML='✓ '+msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
+
+/* ---------- routing ---------- */
+function go(route,opts){
+  if(!ROUTES.includes(route))route='home';
+  ROUTES.forEach(r=>{const v=document.getElementById('view-'+r);if(v)v.hidden=(r!==route);});
+  document.querySelectorAll('nav.main a').forEach(a=>a.classList.toggle('active',a.dataset.route===route));
+  const navEl=$('#nav'); if(window.innerWidth<=720){navEl.hidden=true;$('#menuBtn').setAttribute('aria-expanded','false');}
+  if(['home','courses','news','jobs','staff'].includes(route)){
+    try{history.replaceState(null,'', '#'+route);}catch(e){}
+  }
+  window.scrollTo({top:0,behavior:'instant' in window?'instant':'auto'});
+}
+
+/* ---------- render: courses ---------- */
+function courseCard(c,compact){
+  return `<article class="card course" tabindex="0" role="button" aria-label="View ${esc(c.title)}"
+      onclick="openCourse('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCourse('${c.id}')}">
+    <div class="tags"><span class="chip">${esc(c.subject)}</span><span class="chip level">${esc(c.level)}</span></div>
+    <h3>${esc(c.title)}</h3>
+    <p class="desc">${esc(c.desc)}</p>
+    <div class="course-foot">
+      <span class="fee">£${c.fee} <span>/ ${esc(c.per)}</span></span>
+      <span class="go">Enrol →</span>
+    </div>
+  </article>`;
+}
+function renderHome(){
+  $('#homeCourses').innerHTML=COURSES.slice(0,3).map(c=>courseCard(c)).join('');
+  $('#homeNews').innerHTML=NEWS.slice(0,2).map(newsCard).join('');
+}
+function renderFilters(){
+  const subjects=['All',...new Set(COURSES.map(c=>c.subject))];
+  const levels=['All',...new Set(COURSES.map(c=>c.level))];
+  $('#subjectFilters').innerHTML=subjects.map(s=>`<button class="filter" aria-pressed="${s===filterSubject}" onclick="setSubject('${s.replace(/'/g,"\\'")}')">${esc(s)}</button>`).join('');
+  $('#levelFilters').innerHTML=levels.map(l=>`<button class="filter" aria-pressed="${l===filterLevel}" onclick="setLevel('${l.replace(/'/g,"\\'")}')">${esc(l)==='All'?'All levels':esc(l)}</button>`).join('');
+}
+function setSubject(s){filterSubject=s;renderFilters();renderCourses();}
+function setLevel(l){filterLevel=l;renderFilters();renderCourses();}
+function resetCourseFilters(){filterSubject='All';filterLevel='All';searchTerm='';$('#courseSearch').value='';renderFilters();renderCourses();}
+function renderCourses(){
+  const q=searchTerm.trim().toLowerCase();
+  const list=COURSES.filter(c=>
+    (filterSubject==='All'||c.subject===filterSubject)&&
+    (filterLevel==='All'||c.level===filterLevel)&&
+    (!q||(c.title+' '+c.desc+' '+c.subject).toLowerCase().includes(q))
+  );
+  $('#courseGrid').innerHTML=list.map(c=>courseCard(c)).join('');
+  $('#courseEmpty').hidden=list.length>0;
+  $('#resultCount').textContent=`${list.length} course${list.length===1?'':'s'}${filterSubject!=='All'?' in '+filterSubject:''}${filterLevel!=='All'?' · '+filterLevel:''}`;
+}
+
+/* ---------- course detail ---------- */
+function openCourse(id){
+  currentCourse=COURSES.find(c=>c.id===id);if(!currentCourse)return;
+  const c=currentCourse;
+  $('#crumbCourse').textContent=c.title;
+  $('#detailBody').innerHTML=`
+    <div class="detail-grid">
+      <div class="detail-main">
+        <div class="tags" style="margin-bottom:12px"><span class="chip">${esc(c.subject)}</span><span class="chip level">${esc(c.level)}</span></div>
+        <h1>${esc(c.title)}</h1>
+        <p class="desc-long">${esc(c.long)}</p>
+        <h3 style="font-size:1.15rem;margin-top:8px">What's included</h3>
+        <ul class="pts">${c.pts.map(p=>`<li>${p}</li>`).join('')}</ul>
+      </div>
+      <aside class="enrol-card">
+        <div class="price">£${c.fee}<span>per ${esc(c.per)}</span></div>
+        <div style="height:14px"></div>
+        <div class="meta-row"><span class="k">Level</span><span class="v">${esc(c.level)}</span></div>
+        <div class="meta-row"><span class="k">Duration</span><span class="v">${esc(c.dur)}</span></div>
+        <div class="meta-row"><span class="k">Subject</span><span class="v">${esc(c.subject)}</span></div>
+        <div style="height:16px"></div>
+        <button class="btn btn-accent" style="width:100%;justify-content:center" onclick="startEnrol()">Enrol &amp; pay online</button>
+        <div class="secure-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Secure checkout · linked to pupil record</div>
+      </aside>
+    </div>`;
+  go('detail');
+}
+
+/* ---------- enrolment wizard ---------- */
+function startEnrol(){enrolStep=1;enrolData={};$('#crumbBackCourse').textContent=currentCourse.title;$('#crumbBackCourse').onclick=()=>openCourse(currentCourse.id);$('#enrolTitle').textContent='Enrol — '+currentCourse.title;renderEnrol();go('enrol');}
+function setSteps(){for(let i=1;i<=3;i++){const el=$('#step-'+i);el.classList.toggle('active',i===enrolStep);el.classList.toggle('done',i<enrolStep);}}
+function renderEnrol(){
+  setSteps();const body=$('#enrolStepBody');
+  if(enrolStep===1){
+    body.innerHTML=`
+      <div class="card" style="box-shadow:none">
+        <h3 style="font-size:1.2rem;margin-bottom:4px">Student details</h3>
+        <p style="color:var(--muted);font-size:.9rem;margin-bottom:18px">This creates the pupil record your payment will be linked to.</p>
+        <div class="form-grid">
+          <div class="field"><label for="f_first">Student first name</label><input id="f_first" value="${esc(enrolData.first||'')}"></div>
+          <div class="field"><label for="f_last">Student last name</label><input id="f_last" value="${esc(enrolData.last||'')}"></div>
+          <div class="field"><label for="f_dob">Date of birth</label><input id="f_dob" type="date" value="${esc(enrolData.dob||'')}"></div>
+          <div class="field"><label for="f_year">Year group</label><input id="f_year" placeholder="e.g. Year 10" value="${esc(enrolData.year||'')}"></div>
+          <div class="field full"><label for="f_guardian">Parent / guardian name</label><input id="f_guardian" value="${esc(enrolData.guardian||'')}"></div>
+          <div class="field full"><label for="f_email">Contact email</label><input id="f_email" type="email" placeholder="name@example.com" value="${esc(enrolData.email||'')}"><span class="hint">Used only for enrolment confirmation in this demo.</span></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:22px;gap:12px">
+          <button class="btn btn-line" onclick="openCourse(currentCourse.id)">Back</button>
+          <button class="btn btn-primary" onclick="toPayment()">Continue to payment</button>
+        </div>
+      </div>`;
+  } else if(enrolStep===2){
+    body.innerHTML=`
+      <div class="card" style="box-shadow:none">
+        <h3 style="font-size:1.2rem;margin-bottom:4px">Payment</h3>
+        <p style="color:var(--muted);font-size:.9rem;margin-bottom:16px">Paying for <b>${esc(currentCourse.title)}</b> · ${esc(enrolData.first)} ${esc(enrolData.last)}</p>
+        <div class="pay-note"><span>🔒</span><span><b>Demo only.</b> This is a clickable prototype — payments are simulated and no card details are collected or sent. Fields are pre-filled with placeholder values.</span></div>
+        <div class="form-grid">
+          <div class="field full"><label for="p_name">Name on card</label><input id="p_name" value="A. Guardian" readonly></div>
+          <div class="field full"><label for="p_card">Card number</label><input id="p_card" value="•••• •••• •••• 4242" readonly></div>
+          <div class="field"><label for="p_exp">Expiry</label><input id="p_exp" value="04 / 29" readonly></div>
+          <div class="field"><label for="p_cvc">CVC</label><input id="p_cvc" value="•••" readonly></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)">
+          <span style="color:var(--muted)">Total due</span><span class="fee" style="font-size:1.5rem">£${currentCourse.fee}.00</span>
+        </div>
+        <div class="secure-row" style="margin-top:6px">256-bit encrypted · PCI-compliant gateway (demo)</div>
+        <div style="display:flex;justify-content:space-between;margin-top:20px;gap:12px">
+          <button class="btn btn-line" onclick="enrolStep=1;renderEnrol()">Back</button>
+          <button class="btn btn-accent" onclick="payNow()">Pay £${currentCourse.fee}.00</button>
+        </div>
+      </div>`;
+  } else {
+    const rec=enrolData.record;
+    body.innerHTML=`
+      <div class="card" style="box-shadow:none">
+        <div class="confirm-hero">
+          <div class="tick" aria-hidden="true">✓</div>
+          <h2 style="font-size:1.5rem">Enrolment confirmed</h2>
+          <p style="color:var(--muted);margin-top:6px">A confirmation would be emailed to ${esc(enrolData.email||'the contact address')}.</p>
+        </div>
+        <div class="record">
+          <h4>Linked record created</h4>
+          <div class="record-grid">
+            <div class="rec-col">
+              <h5>Student</h5>
+              <div class="line"><b>${esc(enrolData.first)} ${esc(enrolData.last)}</b></div>
+              <div class="line">ID: ${rec.studentId}</div>
+              <div class="line">${esc(enrolData.year||'—')}</div>
+            </div>
+            <div class="rec-col">
+              <h5>Course enrolment</h5>
+              <div class="line"><b>${esc(currentCourse.title)}</b></div>
+              <div class="line">Ref: ${rec.enrolId}</div>
+              <div class="line">${esc(currentCourse.level)}</div>
+            </div>
+            <div class="rec-col">
+              <h5>Payment</h5>
+              <div class="line"><b>£${currentCourse.fee}.00 · Paid</b></div>
+              <div class="line">Ref: ${rec.payId}</div>
+              <div class="line">${rec.date}</div>
+            </div>
+          </div>
+          <div class="linkbar"><span>${rec.studentId}</span><span>↔</span><span>${rec.enrolId}</span><span>↔</span><span>${rec.payId}</span></div>
+        </div>
+        <p style="color:var(--muted);font-size:.84rem;margin-top:16px;text-align:center">This is what "payments linked to student and course records" looks like in practice — one transaction, three joined records.</p>
+        <div style="display:flex;justify-content:center;margin-top:20px">
+          <button class="btn btn-primary" onclick="go('courses')">Back to courses</button>
+        </div>
+      </div>`;
+  }
+}
+function toPayment(){
+  enrolData.first=$('#f_first').value.trim()||'Jordan';
+  enrolData.last=$('#f_last').value.trim()||'Example';
+  enrolData.dob=$('#f_dob').value;
+  enrolData.year=$('#f_year').value.trim();
+  enrolData.guardian=$('#f_guardian').value.trim();
+  enrolData.email=$('#f_email').value.trim();
+  enrolStep=2;renderEnrol();
+}
+function payNow(){
+  const n=Math.floor(1000+Math.random()*8999);
+  const pad=s=>String(s).padStart(4,'0');
+  enrolData.record={
+    studentId:'ASH-2026-'+pad(n),
+    enrolId:'ENR-'+currentCourse.id.toUpperCase()+'-'+pad(Math.floor(Math.random()*9999)),
+    payId:'PAY-'+Date.now().toString().slice(-8),
+    date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
+  };
+  enrolStep=3;renderEnrol();toast('Payment successful (demo)');
+}
+
+/* ---------- news ---------- */
+let newsFilter='All';
+function newsCard(n){
+  return `<article class="news-item">
+    <div class="datebox"><span class="d">${n.d}</span><span class="m">${esc(n.m)}</span></div>
+    <div style="min-width:0">
+      <span class="pill ${n.type}">${n.type==='event'?'Event':'News'}</span>
+      <h3>${esc(n.title)}</h3>
+      <p>${esc(n.body)}</p>
+    </div>
+  </article>`;
+}
+function renderNewsFilters(){
+  const opts=['All','News','Events'];
+  $('#newsFilters').innerHTML=opts.map(o=>`<button class="filter" aria-pressed="${o===newsFilter}" onclick="newsFilter='${o}';renderNewsFilters();renderNews()">${o}</button>`).join('');
+}
+function renderNews(){
+  const list=NEWS.filter(n=>newsFilter==='All'||(newsFilter==='News'&&n.type==='news')||(newsFilter==='Events'&&n.type==='event'));
+  $('#newsList').innerHTML=list.map(newsCard).join('');
+}
+
+/* ---------- jobs ---------- */
+function renderJobs(){
+  $('#jobList').innerHTML=JOBS.map(j=>`
+    <div class="vac">
+      <div class="vmain">
+        <h3>${j.title}</h3>
+        <div class="vmeta">
+          <span>📁 ${esc(j.dept)}</span><span>🕒 ${esc(j.type)}</span><span>£ ${esc(j.salary)}</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <span class="closing">Closes <b>${j.close}</b></span>
+        <button class="btn btn-primary" onclick="toast('Demo: application form for ${esc(j.title)}')">Apply</button>
+      </div>
+    </div>`).join('');
+}
+
+/* ---------- CMS ---------- */
+function initCMS(){
+  const mark=()=>{const s=$('#cmsStatus');s.classList.remove('live');s.innerHTML='<i></i> Draft — unsaved changes';};
+  ['cmsTitle','cmsBody','cmsCat'].forEach(id=>$('#'+id).addEventListener('input',mark));
+  $('#cmsPublish').addEventListener('click',()=>{const s=$('#cmsStatus');s.classList.add('live');s.innerHTML='<i></i> Published — live';toast('Published to live site');});
+}
+
+/* ---------- theme ---------- */
+function initTheme(){
+  const KEY='ashgrove-theme';
+  let saved=null;try{saved=localStorage.getItem(KEY);}catch(e){}
+  if(saved)document.documentElement.setAttribute('data-theme',saved);
+  $('#themeBtn').addEventListener('click',()=>{
+    const cur=document.documentElement.getAttribute('data-theme');
+    const isDark=cur?cur==='dark':matchMedia('(prefers-color-scheme:dark)').matches;
+    const next=isDark?'light':'dark';
+    document.documentElement.setAttribute('data-theme',next);
+    try{localStorage.setItem(KEY,next);}catch(e){}
+  });
+}
+
+/* ---------- init ---------- */
+function init(){
+  renderHome();renderFilters();renderCourses();renderNewsFilters();renderNews();renderJobs();initCMS();initTheme();
+  $('#courseSearch').addEventListener('input',e=>{searchTerm=e.target.value;renderCourses();});
+  $('#menuBtn').addEventListener('click',()=>{const n=$('#nav');const open=n.hidden;n.hidden=!open;$('#menuBtn').setAttribute('aria-expanded',String(open));});
+  const h=(location.hash||'').replace('#','');
+  go(ROUTES.includes(h)?h:'home');
+}
+init();
+</script>
 
